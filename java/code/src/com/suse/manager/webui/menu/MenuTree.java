@@ -14,9 +14,6 @@
  */
 package com.suse.manager.webui.menu;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.PageContext;
-
 import com.redhat.rhn.common.conf.ConfigDefaults;
 import com.redhat.rhn.common.security.acl.Access;
 import com.redhat.rhn.common.security.acl.Acl;
@@ -25,6 +22,11 @@ import com.redhat.rhn.domain.user.User;
 import com.redhat.rhn.frontend.struts.RequestContext;
 
 import com.google.gson.GsonBuilder;
+import com.suse.manager.plugin.MenuExtensionPoint;
+import com.suse.manager.plugin.PluginService;
+
+import org.apache.log4j.Logger;
+import org.pf4j.PluginManager;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -32,10 +34,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.jsp.PageContext;
+
 /**
  * The UI Menu Tree.
  */
 public class MenuTree {
+    private static final Logger LOG = Logger.getLogger(MenuTree.class);
+
     /**
      * Generate a List of {@link MenuItem}.
      *
@@ -399,6 +406,8 @@ public class MenuTree {
                             : "https://documentation.suse.com/suma/")
                     .withTarget("_blank"))
                 );
+
+            addExtensionMenus(true, adminRoles, nodes);
         }
         else {
             // Create First User
@@ -441,12 +450,45 @@ public class MenuTree {
                             : "https://documentation.suse.com/suma/")
                     .withTarget("_blank"))
                 );
+
+            addExtensionMenus(false, adminRoles, nodes);
         }
 
         if (getActiveNode(nodes, url) == null) {
             getBestActiveDirs(nodes, url);
         }
         return nodes;
+    }
+
+    private static void addExtensionMenus(boolean authenticated, Map<String, Boolean> adminRoles, MenuItemList nodes) {
+        PluginManager pluginManager = PluginService.getPluginManager();
+        List<MenuExtensionPoint> webExtensions = pluginManager.getExtensions(MenuExtensionPoint.class);
+        webExtensions.forEach(extension -> {
+            Map<String, List<MenuItem>> items = extension.getMenuItems(adminRoles, authenticated);
+            items.entrySet().forEach(entry -> {
+                String key = entry.getKey();
+                String[] parents = key != null && !key.isEmpty() ? key.split("/") : new String[0];
+
+                List<MenuItem> loopedNodes = nodes;
+                for (String parent : parents) {
+                    MenuItem node = loopedNodes.stream()
+                            .filter(child -> child.getLabel().equals(parent))
+                            .findFirst()
+                            .orElse(null);
+                    if (node == null) {
+                        LOG.error("Failed to add extension menu entries to " + entry.getKey());
+                        loopedNodes = null;
+                        break;
+                    }
+                    loopedNodes = node.getSubmenu();
+                }
+                if (loopedNodes != null) {
+                    for (MenuItem item : entry.getValue()) {
+                        loopedNodes.add(item);
+                    }
+                }
+            });
+        });
     }
 
     /**
