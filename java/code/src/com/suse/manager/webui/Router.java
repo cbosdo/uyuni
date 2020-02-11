@@ -21,6 +21,8 @@ import static spark.Spark.get;
 import static spark.Spark.notFound;
 import static spark.Spark.post;
 
+import com.suse.manager.plugin.PluginService;
+import com.suse.manager.plugin.WebExtensionPoint;
 import com.suse.manager.webui.controllers.ActivationKeysController;
 import com.suse.manager.webui.controllers.CVEAuditController;
 import com.suse.manager.webui.controllers.DownloadController;
@@ -55,8 +57,11 @@ import com.suse.manager.webui.controllers.login.LoginController;
 import com.suse.manager.webui.errors.NotFoundException;
 
 import org.apache.http.HttpStatus;
+import org.apache.log4j.Logger;
+import org.pf4j.PluginManager;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import spark.ModelAndView;
@@ -67,6 +72,8 @@ import spark.template.jade.JadeTemplateEngine;
  * Router class defining the web UI routes.
  */
 public class Router implements SparkApplication {
+
+    private static final Logger LOG = Logger.getLogger(Router.class);
 
     /**
      * Invoked from the SparkFilter. Add routes here.
@@ -152,6 +159,11 @@ public class Router implements SparkApplication {
 
         // Single Sign-On (SSO) via SAML
         SSOController.initRoutes();
+
+        // Load extension routes
+        PluginManager pluginManager = PluginService.getPluginManager();
+        List<WebExtensionPoint> webExtensions = pluginManager.getExtensions(WebExtensionPoint.class);
+        webExtensions.forEach(extension -> extension.addRoutes(jade));
     }
 
     private void  initNotFoundRoutes(JadeTemplateEngine jade) {

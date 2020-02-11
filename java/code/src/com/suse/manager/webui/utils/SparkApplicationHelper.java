@@ -23,10 +23,10 @@ import com.redhat.rhn.domain.role.RoleFactory;
 import com.redhat.rhn.domain.user.User;
 import com.redhat.rhn.frontend.struts.RequestContext;
 
-import com.suse.manager.webui.Languages;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.suse.manager.webui.Languages;
+import com.suse.manager.webui.PluggableTemplateLoader;
 
 import org.apache.http.HttpStatus;
 
@@ -279,7 +279,10 @@ public class SparkApplicationHelper {
         });
 
         // set up template engine
-        JadeTemplateEngine jade = new JadeTemplateEngine(TEMPLATE_ROOT);
+        PluggableTemplateLoader templateLoader = new PluggableTemplateLoader(TEMPLATE_ROOT);
+        JadeConfiguration jadeConfig = new JadeConfiguration();
+        jadeConfig.setTemplateLoader(templateLoader);
+        JadeTemplateEngine jade = new JadeTemplateEngine(jadeConfig);
 
         // set up i10n engine and other default template variables
         sharedVariables.put("l", Languages.getInstance());
