@@ -27,7 +27,7 @@ import java.util.List;
  * @version $Rev$
  */
 
-public class NavTree {
+public class NavTree implements NavTreeItem {
     private String label;
     private int titleDepth;
     private boolean invisible;
@@ -45,33 +45,22 @@ public class NavTree {
         nodes = new ArrayList<>();
     }
 
-    /**
-       Adds a node to the tree
-       @param n node added to tree
-    */
+    @Override
     public void addNode(NavNode n) {
         nodes.add(n);
     }
-    /**
-     * Gets the top-level nodes associated with the tree
-     * @return List of the nodes
-     */
+
+    @Override
     public List<NavNode> getNodes() {
         return Collections.unmodifiableList(nodes);
     }
 
-    /**
-     * Gets the current value of label
-     * @return String the current value
-     */
+    @Override
     public String getLabel() {
         return this.label;
     }
 
-    /**
-     * Sets the value of label to new value
-     * @param labelIn New value for label
-     */
+    @Override
     public void setLabel(String labelIn) {
         this.label = labelIn;
     }

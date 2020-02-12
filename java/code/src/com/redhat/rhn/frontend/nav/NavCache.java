@@ -15,9 +15,16 @@
 
 package com.redhat.rhn.frontend.nav;
 
+import com.suse.manager.plugin.NavMenuExtensionPoint;
+import com.suse.manager.plugin.PluginService;
+
+import org.apache.log4j.Logger;
+import org.pf4j.PluginManager;
+
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,6 +36,8 @@ import java.util.Map;
  */
 
 public class NavCache {
+    private static final Logger LOG = Logger.getLogger(NavCache.class);
+
     // the cache itself; a nice, happy, synchronized map
     private static Map<URL, NavTree> cache = Collections
             .synchronizedMap(new HashMap<URL, NavTree>());
@@ -51,6 +60,36 @@ public class NavCache {
         }
 
         ret = NavDigester.buildTree(url);
+
+        PluginManager pluginManager = PluginService.getPluginManager();
+        List<NavMenuExtensionPoint> extensions = pluginManager.getExtensions(NavMenuExtensionPoint.class);
+        for (NavMenuExtensionPoint extension : extensions) {
+            Map<String, List<NavNode>> nodes = extension.getNodes(ret.getLabel());
+            for (Map.Entry<String, List<NavNode>> entry : nodes.entrySet()) {
+                String key = entry.getKey();
+                String[] parents = key != null && !key.isEmpty() ? key.split("/") : new String[0];
+
+                NavTreeItem treeItem = ret;
+                for (String parent : parents) {
+                    NavNode node = treeItem.getNodes().stream()
+                        .filter(child -> child.getName().equals(parent))
+                        .findFirst()
+                        .orElse(null);
+                    if (node == null) {
+                        LOG.error("Failed to add extension menu entries to " + entry.getKey());
+                        treeItem = null;
+                        break;
+                    }
+                    treeItem = node;
+                }
+                if (treeItem != null) {
+                    for (NavNode toAdd : entry.getValue()) {
+                        treeItem.addNode(toAdd);
+                    }
+                }
+            };
+        }
+
         cache.put(url, ret);
 
         return ret;

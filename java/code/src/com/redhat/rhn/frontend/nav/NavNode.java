@@ -30,7 +30,7 @@ import java.util.List;
  * @version $Rev$
  */
 
-public class NavNode {
+public class NavNode implements NavTreeItem {
     private String label;
     private String name;
     private String acl;
@@ -60,18 +60,12 @@ public class NavNode {
         showChildrenIfActive = true;
     }
 
-    /**
-     * Returns an unmodifiableList containing children of the node
-     * @return List the children of the node
-     */
+    @Override
     public List<NavNode> getNodes() {
-             return Collections.unmodifiableList(children);
+        return Collections.unmodifiableList(children);
     }
 
-    /**
-     * Adds a child node to the current node
-     * @param child The child node
-     */
+    @Override
     public void addNode(NavNode child) {
         children.add(child);
     }
@@ -130,18 +124,12 @@ public class NavNode {
 
     /* Begin copy/paste constructors */
 
-    /**
-     * Gets the current value of label
-     * @return String the current value
-     */
+    @Override
     public String getLabel() {
         return this.label;
     }
 
-    /**
-     * Sets the value of label to new value
-     * @param labelIn New value for label
-     */
+    @Override
     public void setLabel(String labelIn) {
         this.label = labelIn;
     }
