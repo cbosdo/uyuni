@@ -14,6 +14,21 @@
  */
 package com.redhat.rhn.common.localization;
 
+import com.redhat.rhn.common.conf.Config;
+import com.redhat.rhn.common.conf.ConfigDefaults;
+import com.redhat.rhn.common.db.datasource.DataResult;
+import com.redhat.rhn.common.db.datasource.ModeFactory;
+import com.redhat.rhn.common.db.datasource.SelectMode;
+import com.redhat.rhn.common.util.StringUtil;
+import com.redhat.rhn.frontend.context.Context;
+
+import com.suse.manager.plugin.LocalizationExtensionPoint;
+import com.suse.manager.plugin.PluginService;
+
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.log4j.Logger;
+import org.pf4j.PluginManager;
+
 import java.text.Collator;
 import java.text.DateFormat;
 import java.text.NumberFormat;
@@ -29,23 +44,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.Optional;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.TreeSet;
-
-import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.log4j.Logger;
-
-import com.redhat.rhn.common.conf.Config;
-import com.redhat.rhn.common.conf.ConfigDefaults;
-import com.redhat.rhn.common.db.datasource.DataResult;
-import com.redhat.rhn.common.db.datasource.ModeFactory;
-import com.redhat.rhn.common.db.datasource.SelectMode;
-import com.redhat.rhn.common.util.StringUtil;
-import com.redhat.rhn.frontend.context.Context;
 
 /**
  * Localization service class to simplify the job for producing localized
@@ -104,6 +109,18 @@ public class LocalizationService {
         for (int i = 0; i < packages.length; i++) {
             addKeysToMap(packages[i]);
         }
+
+        // Loop over extensions to add the keys
+        PluginManager pluginManager = PluginService.getPluginManager();
+        List<LocalizationExtensionPoint> extensions = pluginManager.getExtensions(LocalizationExtensionPoint.class);
+        extensions.forEach(extension -> {
+            String extensionName = extension.getClass().getCanonicalName();
+            Enumeration<String> keys = extension.getKeys();
+            while (keys.hasMoreElements()) {
+                keyToBundleMap.put(keys.nextElement(), extensionName);
+            }
+        });
+
         if (supportedLocales.size() > 0) {
             supportedLocales.clear();
         }
@@ -304,6 +321,17 @@ public class LocalizationService {
             }
         }
         catch (ClassNotFoundException ce) {
+            // If it's not a class, then try with extensions
+            PluginManager pluginManager = PluginService.getPluginManager();
+            List<LocalizationExtensionPoint> extensions = pluginManager.getExtensions(LocalizationExtensionPoint.class);
+            Optional<String> localized = extensions.stream()
+                .filter(extension -> extension.getClass().getCanonicalName().equals(keyToBundleMap.get(messageId)))
+                .findFirst()
+                .map(extension -> extension.getMessage(messageId, locale, args));
+            if (localized.isPresent()) {
+                return getDebugVersionOfString(localized.get());
+            }
+
             String message = "Class not found when trying to fetch a message: " +
                     ce.toString();
             log.error(message, ce);
