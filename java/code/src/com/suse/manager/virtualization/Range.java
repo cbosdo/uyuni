@@ -14,6 +14,11 @@
  */
 package com.suse.manager.virtualization;
 
+import org.jdom.Element;
+
+import java.util.Optional;
+import java.util.function.Function;
+
 public class Range<T> {
     private T start;
     private T end;
@@ -44,5 +49,35 @@ public class Range<T> {
      */
     public void setEnd(T endIn) {
         end = endIn;
+    }
+
+    /**
+     * Parse a range XML node
+     *
+     * @param node the node to parse
+     *
+     * @return the Range definition
+     */
+    public static Optional<Range<String>> parse(Element node) {
+        return parse(node, Function.identity());
+    }
+
+    /**
+     * Parse a range XML node
+     *
+     * @param node the node to parse
+     * @param converter function converting the string representation to the destination type
+     * @param <T> The type of the range to create
+     *
+     * @return the Range definition
+     */
+    public static <T> Optional<Range<T>> parse(Element node, Function<String, T> converter) {
+        if (node == null) {
+            return Optional.empty();
+        }
+        Range<T> def = new Range<T>();
+        def.setStart(converter.apply(node.getAttributeValue("start")));
+        def.setEnd(converter.apply(node.getAttributeValue("end")));
+        return Optional.of(def);
     }
 }

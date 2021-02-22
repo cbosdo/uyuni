@@ -16,7 +16,12 @@ package com.suse.manager.virtualization;
 
 import com.google.gson.annotations.SerializedName;
 
+import org.jdom.Attribute;
+import org.jdom.Element;
+
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * Represents the virtual network virtualport configuration
@@ -138,5 +143,36 @@ public class VirtualPortDef {
      */
     public void setInstanceId(Optional<String> instanceIdIn) {
         instanceId = instanceIdIn;
+    }
+
+    /**
+     * Extract information from virtualport JDOM XML Node
+     *
+     * @param node the node to parse
+     *
+     * @return the virtual port definition
+     */
+    public static Optional<VirtualPortDef> parse(Element node) {
+        if (node == null) {
+            return Optional.empty();
+        }
+        VirtualPortDef def = new VirtualPortDef();
+        def.setType(node.getAttributeValue("type"));
+        Map<String, Consumer<String>> paramsMap = Map.of(
+                "interfaceid", v -> def.setInterfaceId(Optional.of(v)),
+                "instanceid", v -> def.setInstanceId(Optional.of(v)),
+                "managerid", v -> def.setManagerId(Optional.of(v)),
+                "profileid", v -> def.setProfileId(Optional.of(v)),
+                "typeid", v -> def.setTypeId(Optional.of(v)),
+                "typeidversion", v -> def.setTypeIdVersion(Optional.of(v))
+        );
+        Element parametersNode = node.getChild("parameters");
+        if (parametersNode != null) {
+            for (Object attribute : parametersNode.getAttributes()) {
+                Attribute attr = (Attribute)attribute;
+                paramsMap.getOrDefault(attr.getName(), (v) -> { }).accept(attr.getValue());
+            }
+        }
+        return Optional.of(def);
     }
 }
