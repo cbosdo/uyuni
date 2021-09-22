@@ -59,19 +59,6 @@ function VirtualSystems(props: Props) {
     return true;
   };
 
-  const handleCSV = () => {
-    const url = "/rhn/manager/systems/CSV/virtualSystemsList";
-    const csvData = {
-      columns: ["Virtual Host", "Virtual System", "Status", "Updates", "Base Software Channel"],
-      pageData: items
-    };
-    Network.post(url,csvData)
-    .then((res) => console.log("res " + res)
-    ) .catch(err => {
-      console.log("err " + err);
-    })
-  }
-
   return (
     <>
       <h1>
@@ -141,7 +128,7 @@ function VirtualSystems(props: Props) {
       </Table>
 
       <div className="spacewalk-csv-download">
-        <a onClick={handleCSV}><IconTag type="item-download-csv"/>Download CSV</a>
+        <a href="/rhn/manager/systems/csv/virtualSystems"><IconTag type="item-download-csv"/>Download CSV</a>
       </div>
 
     </>
