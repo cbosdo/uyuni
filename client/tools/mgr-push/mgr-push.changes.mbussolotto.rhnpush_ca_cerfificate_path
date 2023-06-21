@@ -1,0 +1,1 @@
+-  Use CA certificate from /etc/pki/trust/anchors in rhnpush
