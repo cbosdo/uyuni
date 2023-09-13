@@ -75,7 +75,7 @@ class rhnpushConfigParser:
             'no_session_caching':   '0',
             'proxy':   '',
             'tolerant':   '0',
-            'ca_chain':  get_ca_bundle_path(), 
+            'ca_chain':  self.get_ca_bundle_path(), 
             'timeout': None
         }
 
