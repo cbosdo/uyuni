@@ -117,7 +117,8 @@ public class AuthHandler extends BaseHandler {
         long dur = getDuration(duration);
         //Create a new session with the user
         WebSession session = SessionManager.makeSession(user.getId(), dur);
-        return session.getKey();
+        String key = session.getKey();
+        return key;
     }
 
     /**
