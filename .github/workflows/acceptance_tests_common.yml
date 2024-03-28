@@ -9,7 +9,7 @@ on:
         required: true
         type: string
 env:
-  UYUNI_PROJECT: uyuni-project
+  UYUNI_PROJECT: cbosdo
   UYUNI_VERSION: master
   CUCUMBER_PUBLISH_TOKEN: ${{ secrets.CUCUMBER_PUBLISH_TOKEN }}
 jobs:
