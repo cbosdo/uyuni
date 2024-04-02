@@ -182,9 +182,6 @@ ProxyPass /cobbler https://{config['server']}/cobbler
 ProxyPassReverse /cobbler https://{config['server']}/cobbler
         ''')
 
-    with open("/etc/apache2/conf.d/susemanager-pub.conf", "w") as file:
-        file.write("WSGIScriptAlias /pub /usr/share/rhn/wsgi/xmlrpc.py")
-
     with open("/etc/apache2/vhosts.d/ssl.conf", "w") as file:
         file.write(f'''
 <IfDefine SSL>
@@ -213,33 +210,46 @@ ProxyPassReverse /cobbler https://{config['server']}/cobbler
 </IfDefine>
 ''')
 
-    # Adjust logs format in apache httpd:
-    # Modify the other configurations so that the var HANDLER_TYPE gets set based on a directory of a script executed
-    insert_under_line(
-        "/etc/apache2/conf.d/spacewalk-proxy-wsgi.conf",
-        "<Directory /usr/share/rhn>",
-        'SetEnv HANDLER_TYPE "proxy-broker"'
-    )
-    insert_under_line(
-        "/etc/apache2/conf.d/spacewalk-proxy.conf",
-        '<Directory "/srv/www/htdocs/pub/*">',
-        'SetEnv HANDLER_TYPE "proxy-html"'
-    )
-    insert_under_line(
-        "/etc/apache2/conf.d/spacewalk-proxy.conf",
-        '<Directory "/srv/www/htdocs/docs/*">',
-        'SetEnv HANDLER_TYPE "proxy-docs"'
-    )
 
-    # redirect /saltboot to the server
-    insert_under_line(
-        "/etc/apache2/conf.d/spacewalk-proxy-wsgi.conf",
-        "WSGIScriptAlias /tftp /usr/share/rhn/wsgi/xmlrpc.py",
-        "WSGIScriptAlias /saltboot /usr/share/rhn/wsgi/xmlrpc.py"
-    )
+    with open("/etc/apache2/conf.d/susemanager-proxy.conf", "w") as file:
+        file.write(f'''
+CacheEnable disk /
+CacheRoot /var/cache/apache2/
+
+# common caching directives
+CacheQuickHandler off
+CacheLock on
+CacheLockPath /tmp/mod_cache-lock
+CacheLockMaxAge 5
+CacheHeader On
+
+# cache control
+CacheIgnoreNoLastMod On
+CacheIgnoreCacheControl On
+
+# unset headers from upstream server
+Header unset Expires
+Header unset Cache-Control
+Header unset Pragma
+
+# set expiration headers for static content
+ExpiresActive On
+ExpiresByType text/html "access plus 1 years"
+ExpiresByType image/png "access plus 1 years"
+ExpiresByType application/javascript "access plus 1 years"
+
+    
+# reverse proxy requests to upstream server
+ProxyRequests Off # used for forward proxying
+SSLProxyEngine On # required if proxying to https
+ProxyPass / https://{config['server']}/
+ProxyPassReverse / https://{config['server']}/
+''')
 
     os.system('chown root:www /etc/rhn/rhn.conf')
     os.system('chmod 640 /etc/rhn/rhn.conf')
+
+os.system('rm /etc/apache2/conf.d/spacewalk-proxy-wsgi.conf')
 
 # Make sure permissions are set as desired
 os.system('chown -R wwwrun:www /var/spool/rhn-proxy')

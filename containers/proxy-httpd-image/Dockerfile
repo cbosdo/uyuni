@@ -24,6 +24,8 @@ RUN zypper --gpg-auto-import-keys --non-interactive install --auto-agree-with-li
     python3-PyYAML && \
     sh remove_unused.sh
 
+RUN a2enmod cache && a2enmod cache_disk
+
 # Replace mod_log_config.conf so that the logger takes a special var HANDLER_TYPE
 COPY mod_log_config.conf /etc/apache2/mod_log_config.conf
 
