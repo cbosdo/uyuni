@@ -559,23 +559,6 @@ $> spacewalk-service stop """
 
 
 # pylint: disable-next=invalid-name
-def deployPg(server_key_content):
-    pg_uid, pg_gid = getUidGid("postgres", "postgres")
-    if pg_uid and pg_gid:
-        # deploy only the key with different permissions
-        # the certificate is the same as for apache
-        if os.path.exists(PG_KEY_FILE):
-            os.remove(PG_KEY_FILE)
-        # pylint: disable-next=unspecified-encoding
-        with open(PG_KEY_FILE, "w", encoding="utf-8") as f:
-            f.write(server_key_content)
-        os.chmod(PG_KEY_FILE, int("0600", 8))
-        os.chown(PG_KEY_FILE, pg_uid, pg_gid)
-
-        log("""$> systemctl restart postgresql.service """)
-
-
-# pylint: disable-next=invalid-name
 def deployCAInDB(certData):
     if not os.path.exists("/usr/bin/rhn-ssl-dbstore"):
         # not a Uyuni Server - skip deploying into DB
@@ -716,7 +699,6 @@ def _main():
         sys.exit(1)
 
     deployApache(apache_cert_content, files_content.server_key)
-    deployPg(files_content.server_key)
     deployCAUyuni(certData)
     if not options.skip_db:
         deployCAInDB(certData)

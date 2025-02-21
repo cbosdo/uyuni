@@ -26,12 +26,20 @@ spacewalk-setup --clear-db --db-only --answer-file=clear-db-answers-pgsql.txt ||
 }
 spacewalk-sql /usr/share/susemanager/db/postgres/main.sql
 
+cat >>/etc/rhn/rhn.conf <<EOF
+report_db_backend=postgresql
+report_db_user=pythia
+report_db_password=oracle
+report_db_name=reportdb
+report_db_host=
+report_db_port=
+EOF
+
 # Create symlinks because uyuni-setup-reportdb uses absolute paths
 ln -s /manager/schema/spacewalk/spacewalk-sql /usr/bin/spacewalk-sql
 ln -s /manager/schema/spacewalk/spacewalk-schema-upgrade /usr/bin/spacewalk-schema-upgrade
 
-/usr/bin/uyuni-setup-reportdb remove --db reportdb --user pythia ||:
-/usr/bin/uyuni-setup-reportdb create --db reportdb --user pythia --password oracle --local
+/usr/bin/spacewalk-sql --reportdb /usr/share/susemanager/db/reportdb/main.sql
 
 echo "Creating First Org"
 

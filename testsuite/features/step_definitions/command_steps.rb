@@ -1154,8 +1154,7 @@ When(/^I configure the proxy$/) do
              "TRACEBACK_EMAIL=galaxy-noise@suse.de\n" \
              "INSTALL_MONITORING=n\n" \
              "POPULATE_CONFIG_CHANNEL=y\n" \
-             "RHN_USER=admin\n" \
-             "ACTIVATE_SLP=y\n"
+             "RHN_USER=admin\n"
   settings +=
     if running_k3s?
       "USE_EXISTING_CERTS=y\n" \

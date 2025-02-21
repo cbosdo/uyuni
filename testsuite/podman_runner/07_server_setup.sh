@@ -69,7 +69,6 @@ sudo -i podman run --cap-add AUDIT_CONTROL --rm \
     -e MANAGER_DB_PORT="5432"  \
     -e MANAGER_DB_USER="manager"  \
     -e MANAGER_DB_PASS="manager"  \
-    -e MANAGER_DB_PROTOCOL="TCP"  \
     -e REPORT_DB_NAME="reportdb"  \
     -e REPORT_DB_USER="pythia_susemanager"  \
     -e REPORT_DB_PASS="pythia_susemanager"  \
@@ -77,7 +76,6 @@ sudo -i podman run --cap-add AUDIT_CONTROL --rm \
     -e EXTERNALDB_ADMIN_PASS=""  \
     -e EXTERNALDB_PROVIDER=""  \
     -e ISS_PARENT=""  \
-    -e ACTIVATE_SLP=""  \
     -e SCC_USER="test"  \
     -e SCC_PASS="test"  \
     --cgroupns=host \
