@@ -1,0 +1,164 @@
+suite: test ingress providers
+templates:
+  - ingress.yaml
+  - traefik-routes.yaml
+  - gateway.yaml
+  - routes.yaml
+  - tcp-routes.yaml
+tests:
+
+  - it: should not enable gateway resources by default
+    set:
+      global.fqdn: uyuni.example.com
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: gateway.yaml
+      
+      - hasDocuments:
+          count: 0
+        template: routes.yaml
+      
+      - hasDocuments:
+          count: 0
+        template: tcp-routes.yaml
+
+  - it: should switch to gateway resources when enabled
+    set:
+      global.fqdn: uyuni.example.com
+      gateway:
+        enable: true
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: gateway.yaml
+      
+      - hasDocuments:
+          count: 3
+        template: routes.yaml
+      
+      - hasDocuments:
+          count: 3
+        templates: tcp-routes.yaml
+
+      - hasDocuments:
+          count: 0
+        template: ingress.yaml
+
+      - hasDocument:
+          count: 0
+        template: traefik-routes.yaml
+  
+  - it: should use the given Gateway if a name is set
+    set:
+      global.fqdn: uyuni.example.com
+      gateway:
+        enable: true
+        name: "test-gw"
+        exposeJavaDebug: true
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: gateway.yaml
+
+      - hasDocument:
+          count: 3
+        template: routes.yaml
+        documentSelector:
+          path: spec.parentRefs[?(@.name=="test-gw")].name
+          value: test-gw
+
+      - hasDocument:
+          count: 6
+        template: tcp-routes.yaml
+        documentSelector:
+          path: spec.parentRefs[?(@.name=="test-gw")].name
+          value: test-gw
+  
+  - it: should create all HTTPRoutes and TCPRoutes
+    set:
+      global.fqdn: uyuni.example.com
+      gateway:
+        enable: true
+        exposeJavaDebug: true
+      release:
+        namespace: myns
+    asserts:
+      - containsDocument:
+          kind: Gateway
+          apiVersion: gateway.networking.k8s.io/v1
+          name: uyuni-gateway
+          namespace: myns
+        template: gateway.yaml
+      
+      - containsDocument:
+          kind: HTTPRoute
+          apiVersion: gateway.networking.k8s.io/v1
+          name: uyuni-ssl-redirect
+          namespace: myns
+          any: true
+        template: routes.yaml
+      
+      - containsDocument:
+          kind: HTTPRoute
+          apiVersion: gateway.networking.k8s.io/v1
+          name: uyuni-https-routes
+          namespace: myns
+          any: true
+        template: routes.yaml
+      
+      - containsDocument:
+          kind: HTTPRoute
+          apiVersion: gateway.networking.k8s.io/v1
+          name: uyuni-nossl-routes
+          namespace: myns
+          any: true
+        template: routes.yaml
+      
+      - containsDocument:
+          kind: TCPRoute
+          apiVersion: gateway.networking.k8s.io/v1alpha2
+          name: salt-publish
+          namespace: myns
+          any: true
+        template: tcp-routes.yaml
+      
+      - containsDocument:
+          kind: TCPRoute
+          apiVersion: gateway.networking.k8s.io/v1alpha2
+          name: salt-request
+          namespace: myns
+          any: true
+        template: tcp-routes.yaml
+      
+      - containsDocument:
+          kind: TCPRoute
+          apiVersion: gateway.networking.k8s.io/v1alpha2
+          name: reportdb-pgsql
+          namespace: myns
+          any: true
+        template: tcp-routes.yaml
+      
+      - containsDocument:
+          kind: TCPRoute
+          apiVersion: gateway.networking.k8s.io/v1alpha2
+          name: tasko-debug
+          namespace: myns
+          any: true
+        template: tcp-routes.yaml
+      
+      - containsDocument:
+          kind: TCPRoute
+          apiVersion: gateway.networking.k8s.io/v1alpha2
+          name: search-debug
+          namespace: myns
+          any: true
+        template: tcp-routes.yaml
+      
+      - containsDocument:
+          kind: TCPRoute
+          apiVersion: gateway.networking.k8s.io/v1alpha2
+          name: tomcat-debug
+          namespace: myns
+          any: true
+        template: tcp-routes.yaml

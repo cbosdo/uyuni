@@ -1,7 +1,7 @@
 suite: test global values parsing
 templates:
   - templates/ingress.yaml
-  - templates/k3s-ingress-routes.yaml
+  - templates/traefik-routes.yaml
 tests:
   - it: should configure the ingress for nginx
     set:
@@ -27,4 +27,4 @@ tests:
 
       - hasDocuments:
           count: 0
-        template: k3s-ingress-routes.yaml
+        template: traefik-routes.yaml

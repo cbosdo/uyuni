@@ -36,6 +36,9 @@ ingress:
   type: "traefik"
   
   ## Specify the ingress class name to use. Empty, means that the default one will be used.
+  ## If using the traefik end points and TCP routers, this value needs to match Traefik's
+  ## --providers.kubernetescrd.ingressclass parameter's value.
+  ## On rke2 this is likely to be "traefik". On K3S it is likely to be ""
   ##
   class: ""
   
